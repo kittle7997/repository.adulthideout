@@ -51,6 +51,7 @@ tubepornclassic = 'http://www.tubepornclassic.com'
 crazyshit = 'http://www.crazyshit.com'
 efukt = 'http://efukt.com/'
 pornhub = 'http://pornhub.com'
+pornsocket = 'http://pornsocket.com'
 
 def menulist():
 	try:
@@ -91,6 +92,7 @@ def main():
 	add_dir('PornCom [COLOR yellow] Videos[/COLOR]', porncom + '/videos?p=1', 2, logos + 'porncom.png', fanart)	
 	add_dir('PornHD [COLOR yellow] Videos[/COLOR]', pornhd, 2, logos + 'pornhd.png', fanart)
 	add_dir('PornHub [COLOR yellow] Videos[/COLOR]', pornhub +'/video?page=1', 2, logos + 'pornhub.png', fanart)
+	add_dir('Pornsocket [COLOR yellow] Videos[/COLOR]', pornsocket + '/media-gallery.html?display=list&limitstart=0', 2, logos + 'pornsocket.png', fanart)	
 	add_dir('PornXS [COLOR yellow] Videos[/COLOR]', pornxs + '/browse/sort-time/', 2, logos + 'pornxs.png', fanart)		
 	add_dir('RedTube [COLOR yellow] Videos[/COLOR]', redtube + '/?page=1', 2, logos + 'redtube.png', fanart)
 	add_dir('TnAFlix [COLOR yellow] Videos[/COLOR]', tnaflix + 'new/1/', 2, logos + 'tnaflix.png', fanart) 	
@@ -150,14 +152,21 @@ def search():
 			url = zbporn + '/search/?q=' + searchText	  
 			start(url)	
 		elif 'pornhd.com' in name:
-			url = pornhd + '/search?search=' + searchText	  
+			url = pornhd + '/search?search=' + searchText 
 			start(url)				
 		elif 'xvideos.com' in name:
 			url = xvideos + '/?k=' + searchText      	  
 			media_list(url)
 		elif 'motherless' in name:
-			url = motherless + '/term/videos/' + searchText	  
-			media_list(url)	
+			if 'Groups' in name:
+				url = motherless + '/search/groups?term=' + searchText + '&member=&sort=date&range=0&size=0'
+				motherless_groups_cat(url)
+			if 'Galleries' in name:
+				url = motherless + '/search/Galleries?term=' + searchText + '&member=&sort=date&range=0&size=0'	  
+				motherless_galeries_cat(url)
+			else:
+				url = motherless + '/term/videos/' + searchText	  
+				media_list(url)	
 		elif 'eporner' in name:
 			url = eporner + '/search/' + searchText 
 			start(url)	
@@ -173,6 +182,10 @@ def search():
 		elif 'pornhub' in name:
 			url = pornhub + '/video/search?search=' + searchText 
 			start(url)
+		elif 'pornsocket' in name:
+			url = pornsocket + '/media-gallery.html?filter_search=&amp;filter_tag=' + searchText 
+			start(url)
+			
 			
 	except:
 		pass
@@ -233,13 +246,23 @@ def start(url):
 		add_dir('[COLOR blue]pornhub.com     [COLOR red]Search[/COLOR]', pornhub, 1, logos + 'pornhub.png', fanart)	
 		add_dir('[COLOR magenta]Categories[/COLOR]', pornhub + '/categories', 25, logos + 'pornhub.png', fanart) 
 		#add_dir('[COLOR magenta]Change Content[/COLOR]', pornhub , 24, logos + 'pornhub.png', fanart)
-		match = re.compile('<a href="([^"]+)" title="([^"]+)".+?\s*.+?\s*.+?\s*.+?<var class=".+?">([^<]+)</var>\s*.+?\s*.+?\s*.+?data-mediumthumb="(.+?)"').findall(content)
+		match = re.compile('<li class="videoblock.+?<a href="([^"]+)" title="([^"]+)".+?<var class="duration">([^<]+)<.*?data-mediumthumb="([^"]+)"', re.DOTALL).findall(content)
 		for url, name, duration, thumb in match:
+			name = cleantext(name)
 			add_link(name + ' [COLOR lime]('+ duration + ')[/COLOR]', pornhub + url, 4, thumb, fanart)
-		match = re.compile('<link rel="next" href="([^"]+)" />').findall(content) 
-		add_dir('[COLOR blue]Next  Page  >>>>[/COLOR]', match[0], 2, logos + 'pornhub.png', fanart)	
-		
-	
+		match = re.compile('<li class="page_next"><a href="([^"]+)" class="orangeButton">Next</a></li>', re.DOTALL).findall(content) 
+		add_dir('[COLOR blue]Next  Page  >>>>[/COLOR]', pornhub + match[0].replace('&amp;','&'), 2, logos + 'pornhub.png', fanart)	
+
+	elif 'pornsocket' in url:
+		content = make_request(url)
+		add_dir('[COLOR blue]pornsocket.com     [COLOR red]Search[/COLOR]', pornsocket, 1, logos + 'pornsocket.png', fanart)	
+		add_dir('[COLOR magenta]Categories[/COLOR]', pornsocket + '/categories-media.html', 26, logos + 'pornsocket.png', fanart) 
+		match = re.compile('<div class="media-duration">\s*([^<]+)</div>\s*<a href="([^"]+)"> <img src="([^"]+)" border="0" alt="([^"]+)"').findall(content)
+		for duration, url, thumb, name in match:
+			add_link(name + ' [COLOR lime]('+ duration + ')[/COLOR]', pornsocket + url, 4, pornsocket + thumb, fanart)	
+		match = re.compile('><a title="Next" href="([^"]+)" class="pagenav">Next</a>', re.DOTALL).findall(content) 
+		add_dir('[COLOR blue]Next  Page  >>>>[/COLOR]', pornsocket + match[0].replace('&amp;','&'), 2, logos + 'pornsocket.png', fanart)			
+
 	elif 'vikiporn' in url:
 		content = make_request(url)
 		add_dir('[COLOR silver]vikiporn.com     [COLOR red]Search[/COLOR]', vikiporn, 1, logos + 'vikiporn.png', fanart)
@@ -483,6 +506,7 @@ def redtube_channels_cat(url):
 
 def motherless_galeries_cat(url):
 	home()
+	add_dir('[COLOR lightgreen]motherless.com Galleries    [COLOR red]Search[/COLOR]', motherless + '/search/Galleries', 1, logos + 'motherless.png', fanart)
 	content = make_request(url)
 	match = re.compile('href="/G(.+?)" class=".+?" target=".+?">\s*<img class=".+?" src="(.+?)" data-strip-src=".+?" alt="(.+?)"').findall(content)
 	for url, thumb, name in match:
@@ -492,6 +516,7 @@ def motherless_galeries_cat(url):
 		
 def motherless_groups_cat(url): #62
 	home()
+	add_dir('[COLOR lightgreen]motherless.com Groups    [COLOR red]Search[/COLOR]', motherless + '/search/groups?term=', 1, logos + 'motherless.png', fanart)
 	content = make_request(url)
 	match = re.compile('<a href="/g/(.+?)">\s*<div class="avatar-wrap avatar-size-medium">\s*<img\s*src="(.+?)"').findall(content)
 	for url, thumb in match:
@@ -560,10 +585,17 @@ def zbporn_categories(url) :
 def pornhub_categories(url) :
 	home()
 	content = make_request(url)
-	match = re.compile('<a href="([^"]*)"  alt="([^"]*)">\s*<img src="([^"]*)"').findall(content)
+	match = re.compile('<div class="category-wrapper">.+?<a href="(.+?)"  alt="(.+?)">.+?<img src="(.+?)"', re.DOTALL).findall(content)
 	for url, name, thumb in match:
-		add_dir(name, pornhub + url, 2, thumb, fanart)	
+		add_dir(name, pornhub + url, 2, thumb, fanart)
 
+def pornsocket_categories(url) :
+	home()
+	content = make_request(url)
+	match = re.compile('<a href="([^"]*)"> <img src="([^"]*)" border="0" alt="([^"]*)" class="media-thumb "').findall(content)
+	for url, thumb, name in match:
+		add_dir(name, pornsocket + url, 2, pornsocket + thumb, fanart)
+		
 def media_list(url):
 	home()
 	content = make_request(url)
@@ -612,12 +644,12 @@ def media_list(url):
 			add_link(name, yespleaseporn + url, 4, thumb, fanart)
 	
 	elif 'motherless' in url:		
-		match = re.compile('href="(.+?)" class=".+?" target=".+?">\s*<img class=".+?" src="(.+?)" data-strip-src=".+?" alt="(.+?)"').findall(content)
-		for url, thumb, name in match:
+		match = re.compile('href="(.+?)" class=".+?" target=".+?">\s*<img class=".+?" src="(.+?)" data-strip-src=".+?" alt="(.+?)" />\s*</a>\s*<div class=".+?">\s*<h2 class=".+?">.+?</h2>\s*<div class=".+?">(.+?)</div>').findall(content)
+		for url, thumb, name, duration in match:
 			if 'motherless.com' in url:  
-				add_link(name, url, 4, thumb, fanart)
+				add_link(name + ' [COLOR lime]('+ duration + ')[/COLOR]', url, 4, thumb, fanart)
 			else:
-				add_link(name, motherless + url, 4, thumb, fanart)
+				add_link(name + ' [COLOR lime]('+ duration + ')[/COLOR]', motherless + url, 4, thumb, fanart)
 		match = re.compile('<a href="([^"]+)" class="pop" rel="[1-9999]">NEXT').findall(content)
 		for url in match:
 			if '/' in url:  
@@ -727,12 +759,25 @@ def resolve_url(url):
 		media_url = re.compile('file: "(.+?)",').findall(content)[0]
 	elif 'pornhub' in url:	
 		media_url = re.compile("var player_quality_.+? = '(.+?)'").findall(content)[0]
+	elif 'pornsocket' in url:	
+		media_url = pornsocket + re.compile('<source src="(.+?)" type="video/mp4"/>').findall(content)[0]
 	else:
 		media_url = url
 	item = xbmcgui.ListItem(name, path = media_url)
 	xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, item)	  
 	return
 
+def cleantext(text):
+    text = text.replace('&#8211;','-')
+    text = text.replace('&#038;','&')
+    text = text.replace('&#8217;','\'')
+    text = text.replace('&#8230;','...')
+    text = text.replace('&quot;','"')
+    text = text.replace('&#039;','`')
+    text = text.replace('&amp;','&')
+    text = text.replace('&ntilde;','ñ')
+    return text
+	
 def get_params():
 	param = []
 	paramstring = sys.argv[2]
@@ -767,6 +812,7 @@ def add_link(name, url, mode, iconimage, fanart):
 	liz.setProperty('IsPlayable', 'true')  
 	ok = xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = u, listitem = liz)  
 	  
+
 params = get_params()
 url = None
 name = None
@@ -857,6 +903,9 @@ elif mode == 24:
 
 elif mode == 25:	
 	pornhub_categories(url)
+
+elif mode == 26:	
+	pornsocket_categories(url)
 
 elif mode == 60:	
 	motherless_galeries_cat(url)
